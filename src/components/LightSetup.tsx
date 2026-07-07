@@ -10,7 +10,9 @@ export default function LightSetup() {
   useEffect(() => {
     if (!lightRef.current) return;
     const shadow = lightRef.current.shadow;
-    shadow.mapSize.set(2048, 2048);
+    shadow.mapSize.set(4096, 4096);
+    shadow.bias = -0.001;
+    shadow.normalBias = 0.02;
     shadow.camera.left = -15;
     shadow.camera.right = 15;
     shadow.camera.top = 15;

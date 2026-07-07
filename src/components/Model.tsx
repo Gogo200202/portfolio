@@ -1,7 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
-import { type Group, type Mesh } from "three";
+import { MathUtils, type Group, type Mesh } from "three";
 
 const MODEL_URL = `${import.meta.env.BASE_URL}Forest.glb`;
 
@@ -18,11 +18,26 @@ export default function Model() {
   const targetsRef = useRef<Target[]>([]);
   const timeRef = useRef(0);
   const { camera } = useThree();
-  const [zoom, setZoom] = useState(10);
+  const [zoom, setZoom] = useState(0);
+  const mouse = useRef({ x: 0, y: 0 });
+  const angles = useRef({ theta: 0, phi: 0 });
+
+  const CENTER_Y = 1.5;
+
+  useEffect(() => {
+    const onPointerMove = (e: PointerEvent) => {
+      mouse.current = {
+        x: (e.clientX / window.innerWidth) * 2 - 1,
+        y: -(e.clientY / window.innerHeight) * 2 + 1,
+      };
+    };
+    window.addEventListener("pointermove", onPointerMove);
+    return () => window.removeEventListener("pointermove", onPointerMove);
+  }, []);
 
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
-      setZoom((prev) => Math.min(10, prev + e.deltaY * 0.01));
+      setZoom((prev) => MathUtils.clamp(prev + e.deltaY * 0.01, 3, 15));
     };
     window.addEventListener("wheel", onWheel);
   }, []);
@@ -60,7 +75,19 @@ export default function Model() {
     timeRef.current += delta;
     const t = timeRef.current;
 
-    camera.position.z += (zoom - camera.position.z) * 0.08;
+    const targetTheta = mouse.current.x * 0.4;
+    const targetPhi = mouse.current.y * 0.12;
+
+    angles.current.theta += (targetTheta - angles.current.theta) * 0.05;
+    angles.current.phi += (targetPhi - angles.current.phi) * 0.05;
+
+    const dist = zoom;
+    const { theta, phi } = angles.current;
+
+    camera.position.x = dist * Math.sin(theta) * Math.cos(phi);
+    camera.position.y = CENTER_Y + dist * Math.sin(phi);
+    camera.position.z = dist * Math.cos(theta) * Math.cos(phi);
+    camera.lookAt(0, CENTER_Y, 0);
 
     for (const { mesh, origPos, offsetX, dir } of targetsRef.current) {
       const pos = mesh.geometry.attributes.position.array;
