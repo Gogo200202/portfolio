@@ -3,7 +3,7 @@ import { useGLTF } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
 import { type Group, type Mesh } from "three";
 
-const MODEL_URL = "/Forest.glb";
+const MODEL_URL = `${import.meta.env.BASE_URL}Forest.glb`;
 
 interface Target {
   mesh: Mesh;
