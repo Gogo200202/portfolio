@@ -45,7 +45,7 @@ function Model() {
     targetsRef.current = objects;
   }, [scene]);
 
-  useFrame((_, delta) => {B
+  useFrame((_, delta) => {
     timeRef.current += delta;
     const t = timeRef.current;
 
