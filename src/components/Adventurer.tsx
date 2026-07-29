@@ -1,7 +1,13 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import { useEffect, useRef } from "react";
-import { AnimationMixer, type AnimationAction, type Group, Raycaster, Vector3 } from "three";
+import {
+  AnimationMixer,
+  type AnimationAction,
+  type Group,
+  Raycaster,
+  Vector3,
+} from "three";
 
 const MODEL_URL = `${import.meta.env.BASE_URL}Adventurer.glb`;
 const SPEED = 3;
@@ -24,9 +30,15 @@ export default function Adventurer() {
     const mixer = new AnimationMixer(ref.current);
     mixerRef.current = mixer;
 
-    const idleClip = animations.find(a => a.name === "CharacterArmature|Idle");
-    const walkClip = animations.find(a => a.name === "CharacterArmature|Walk");
-    const waveClip = animations.find(a => a.name === "CharacterArmature|Wave");
+    const idleClip = animations.find(
+      (a) => a.name === "CharacterArmature|Idle",
+    );
+    const walkClip = animations.find(
+      (a) => a.name === "CharacterArmature|Walk",
+    );
+    const waveClip = animations.find(
+      (a) => a.name === "CharacterArmature|Wave",
+    );
 
     if (idleClip) idleActionRef.current = mixer.clipAction(idleClip);
     if (walkClip) walkActionRef.current = mixer.clipAction(walkClip);
@@ -88,13 +100,12 @@ export default function Adventurer() {
         wave.fadeOut(0.2);
         waveActionRef.current = null;
       }
-      if (idle && walk) {
+      if (walk) {
         if (moving) {
-          idle.fadeOut(0.2);
+          idle?.fadeOut(0.2);
           walk.reset().fadeIn(0.2).play();
         } else {
           walk.fadeOut(0.2);
-          idle.reset().fadeIn(0.2).play();
         }
       }
     }
@@ -103,17 +114,23 @@ export default function Adventurer() {
       const origin = ref.current.position.clone();
       origin.y += 5;
       raycaster.current.set(origin, new Vector3(0, -1, 0));
-      const intersects = raycaster.current.intersectObjects(r3fScene.children, true);
+      const intersects = raycaster.current.intersectObjects(
+        r3fScene.children,
+        true,
+      );
       for (const hit of intersects) {
-        if (hit.object.name === "mesh2009401224_1" || hit.object.name === "Box001_1") {
-          ref.current.position.y = hit.point.y;
+        if (
+          hit.object.name === "mesh2009401224_1" ||
+          hit.object.name === "Box001_1"
+        ) {
+          ref.current.position.y = hit.point.y + 0.5;
           break;
         }
       }
 
-      const offset = new Vector3(1, 2, 2);
+      const offset = new Vector3(0, 2, 2.5);
       const targetPos = ref.current.position.clone().add(offset);
-      camera.position.lerp(targetPos, 0.08);
+      camera.position.lerp(targetPos, 1);
       camera.lookAt(ref.current.position);
     }
   });
@@ -122,7 +139,7 @@ export default function Adventurer() {
     <primitive
       ref={ref}
       object={scene}
-      position={[0, 0.5, 8]}
+      position={[0, 0.5, 7.2]}
       rotation={[0, Math.PI, 0]}
     />
   );
