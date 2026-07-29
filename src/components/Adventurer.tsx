@@ -1,7 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import { useEffect, useRef } from "react";
-import { type Group, Raycaster, Vector3 } from "three";
+import { AnimationMixer, type AnimationAction, type Group, Raycaster, Vector3 } from "three";
 
 const MODEL_URL = `${import.meta.env.BASE_URL}Adventurer.glb`;
 const SPEED = 3;
@@ -9,10 +9,34 @@ const SPEED = 3;
 const keyState: Record<string, boolean> = {};
 
 export default function Adventurer() {
-  const { scene } = useGLTF(MODEL_URL);
+  const { scene, animations } = useGLTF(MODEL_URL);
   const ref = useRef<Group>(null);
   const { camera, scene: r3fScene } = useThree();
   const raycaster = useRef(new Raycaster());
+  const mixerRef = useRef<AnimationMixer | null>(null);
+  const idleActionRef = useRef<AnimationAction | null>(null);
+  const walkActionRef = useRef<AnimationAction | null>(null);
+  const waveActionRef = useRef<AnimationAction | null>(null);
+  const isMoving = useRef(false);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const mixer = new AnimationMixer(ref.current);
+    mixerRef.current = mixer;
+
+    const idleClip = animations.find(a => a.name === "CharacterArmature|Idle");
+    const walkClip = animations.find(a => a.name === "CharacterArmature|Walk");
+    const waveClip = animations.find(a => a.name === "CharacterArmature|Wave");
+
+    if (idleClip) idleActionRef.current = mixer.clipAction(idleClip);
+    if (walkClip) walkActionRef.current = mixer.clipAction(walkClip);
+
+    if (waveClip) {
+      const wave = mixer.clipAction(waveClip);
+      wave.reset().play();
+      waveActionRef.current = wave;
+    }
+  }, [ref.current, animations]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -30,6 +54,8 @@ export default function Adventurer() {
   }, []);
 
   useFrame((_, delta) => {
+    mixerRef.current?.update(delta);
+
     const forward = new Vector3();
     const right = new Vector3();
     camera.getWorldDirection(forward);
@@ -43,9 +69,34 @@ export default function Adventurer() {
     if (keyState["a"]) dir.sub(right);
     if (keyState["d"]) dir.add(right);
 
-    if (dir.lengthSq() > 0) {
+    const moving = dir.lengthSq() > 0;
+
+    if (moving) {
+      if (ref.current) {
+        ref.current.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI;
+      }
       dir.normalize().multiplyScalar(SPEED * delta);
       if (ref.current) ref.current.position.add(dir);
+    }
+
+    if (moving !== isMoving.current) {
+      isMoving.current = moving;
+      const wave = waveActionRef.current;
+      const idle = idleActionRef.current;
+      const walk = walkActionRef.current;
+      if (wave) {
+        wave.fadeOut(0.2);
+        waveActionRef.current = null;
+      }
+      if (idle && walk) {
+        if (moving) {
+          idle.fadeOut(0.2);
+          walk.reset().fadeIn(0.2).play();
+        } else {
+          walk.fadeOut(0.2);
+          idle.reset().fadeIn(0.2).play();
+        }
+      }
     }
 
     if (ref.current) {
@@ -54,13 +105,7 @@ export default function Adventurer() {
       raycaster.current.set(origin, new Vector3(0, -1, 0));
       const intersects = raycaster.current.intersectObjects(r3fScene.children, true);
       for (const hit of intersects) {
-        let obj = hit.object;
-        let isSelf = false;
-        while (obj.parent) {
-          if (obj === ref.current) { isSelf = true; break; }
-          obj = obj.parent;
-        }
-        if (!isSelf) {
+        if (hit.object.name === "mesh2009401224_1" || hit.object.name === "Box001_1") {
           ref.current.position.y = hit.point.y;
           break;
         }
