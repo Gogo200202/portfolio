@@ -1,7 +1,7 @@
-import TreeModel from "./components/TreeModel";
+import Scene from "./components/Scene";
 
 function App() {
-  return <TreeModel />;
+  return <Scene />;
 }
 
 export default App;
