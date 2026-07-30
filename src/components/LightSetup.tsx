@@ -1,10 +1,13 @@
 import { useEffect, useRef } from "react";
-import { Vector3, type DirectionalLight } from "three";
+import { useFrame, useThree } from "@react-three/fiber";
+import { Vector3, type DirectionalLight, type Mesh } from "three";
 
 let LIGHT_POSITION: Vector3 = new Vector3(5, 10, 5);
 
 export default function LightSetup() {
   const lightRef = useRef<DirectionalLight>(null);
+  const { scene } = useThree();
+  const shadowSetup = useRef(false);
 
   useEffect(() => {
     if (!lightRef.current) return;
@@ -20,6 +23,18 @@ export default function LightSetup() {
     shadow.camera.far = 50;
     shadow.camera.updateProjectionMatrix();
   }, []);
+
+  useFrame(() => {
+    if (shadowSetup.current) return;
+    scene.traverse((node) => {
+      if ((node as Mesh).isMesh) {
+        const mesh = node as Mesh;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+      }
+    });
+    shadowSetup.current = true;
+  });
 
   return (
     <>
