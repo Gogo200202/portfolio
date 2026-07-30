@@ -5,6 +5,7 @@ import {
   AnimationMixer,
   type AnimationAction,
   type Group,
+  type Mesh,
   Raycaster,
   Vector3,
 } from "three";
@@ -24,6 +25,16 @@ export default function Adventurer() {
   const walkActionRef = useRef<AnimationAction | null>(null);
   const waveActionRef = useRef<AnimationAction | null>(null);
   const isMoving = useRef(false);
+
+  useEffect(() => {
+    scene.traverse((node) => {
+      if ((node as Mesh).isMesh) {
+        const mesh = node as Mesh;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+      }
+    });
+  }, [scene]);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -123,7 +134,7 @@ export default function Adventurer() {
           hit.object.name === "mesh2009401224_1" ||
           hit.object.name === "Box001_1"
         ) {
-          ref.current.position.y = hit.point.y + 0.5;
+          ref.current.position.y = hit.point.y;
           break;
         }
       }

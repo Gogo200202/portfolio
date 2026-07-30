@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { Vector3, type DirectionalLight } from "three";
 
 let LIGHT_POSITION: Vector3 = new Vector3(5, 10, 5);
-let AMBIENT_INTENSITY = 0.6;
 
 export default function LightSetup() {
   const lightRef = useRef<DirectionalLight>(null);
@@ -24,13 +23,13 @@ export default function LightSetup() {
 
   return (
     <>
+      <ambientLight intensity={0.5} />
       <directionalLight
         ref={lightRef}
         position={LIGHT_POSITION}
         color="#f9d99c"
         castShadow
       />
-      <ambientLight intensity={AMBIENT_INTENSITY} />
     </>
   );
 }
