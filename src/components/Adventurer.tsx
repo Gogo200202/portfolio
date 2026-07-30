@@ -13,7 +13,7 @@ const MODEL_URL = `${import.meta.env.BASE_URL}Adventurer.glb`;
 const SPEED = 3;
 const Z_MIN = -11.5;
 const Z_MAX = 7.1;
-const COLLISION_DISTANCE = 0.5;
+const COLLISION_DISTANCE = 0.8;
 
 const keyState: Record<string, boolean> = {};
 
@@ -153,7 +153,9 @@ export default function Adventurer() {
       for (const hit of intersects) {
         if (
           hit.object.name === "mesh2009401224_1" ||
-          hit.object.name === "Box001_1"
+          hit.object.name === "Box001_1" ||
+          hit.object.name === "mesh2009401224" ||
+          hit.object.name === "group266667135"
         ) {
           ref.current.position.y = hit.point.y;
           break;
