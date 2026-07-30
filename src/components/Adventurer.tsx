@@ -11,6 +11,8 @@ import {
 
 const MODEL_URL = `${import.meta.env.BASE_URL}Adventurer.glb`;
 const SPEED = 3;
+const Z_MIN = -11.5;
+const Z_MAX = 7.1;
 
 const keyState: Record<string, boolean> = {};
 
@@ -24,6 +26,7 @@ export default function Adventurer() {
   const walkActionRef = useRef<AnimationAction | null>(null);
   const waveActionRef = useRef<AnimationAction | null>(null);
   const isMoving = useRef(false);
+  const lastLoggedPos = useRef("");
 
   useEffect(() => {
     if (!ref.current) return;
@@ -83,12 +86,13 @@ export default function Adventurer() {
 
     const moving = dir.lengthSq() > 0;
 
-    if (moving) {
-      if (ref.current) {
-        ref.current.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI;
+    if (moving && ref.current) {
+      ref.current.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI;
+      const deltaVec = dir.normalize().multiplyScalar(SPEED * delta);
+      const nextPos = ref.current.position.clone().add(deltaVec);
+      if (nextPos.z >= Z_MIN && nextPos.z <= Z_MAX) {
+        ref.current.position.copy(nextPos);
       }
-      dir.normalize().multiplyScalar(SPEED * delta);
-      if (ref.current) ref.current.position.add(dir);
     }
 
     if (moving !== isMoving.current) {
@@ -109,8 +113,14 @@ export default function Adventurer() {
         }
       }
     }
-
+    // camera
     if (ref.current) {
+      const posKey = ref.current.position.toArray().map(v => v.toFixed(3)).join(",");
+      if (posKey !== lastLoggedPos.current) {
+        lastLoggedPos.current = posKey;
+        console.log("Character position:", ref.current.position.toArray().map(v => +v.toFixed(3)));
+      }
+
       const origin = ref.current.position.clone();
       origin.y += 5;
       raycaster.current.set(origin, new Vector3(0, -1, 0));
