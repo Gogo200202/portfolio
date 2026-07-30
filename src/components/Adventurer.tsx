@@ -13,6 +13,7 @@ const MODEL_URL = `${import.meta.env.BASE_URL}Adventurer.glb`;
 const SPEED = 3;
 const Z_MIN = -11.5;
 const Z_MAX = 7.1;
+const COLLISION_DISTANCE = 0.5;
 
 const keyState: Record<string, boolean> = {};
 
@@ -21,6 +22,7 @@ export default function Adventurer() {
   const ref = useRef<Group>(null);
   const { camera, scene: r3fScene } = useThree();
   const raycaster = useRef(new Raycaster());
+  const collisionRaycaster = useRef(new Raycaster());
   const mixerRef = useRef<AnimationMixer | null>(null);
   const idleActionRef = useRef<AnimationAction | null>(null);
   const walkActionRef = useRef<AnimationAction | null>(null);
@@ -90,7 +92,21 @@ export default function Adventurer() {
       ref.current.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI;
       const deltaVec = dir.normalize().multiplyScalar(SPEED * delta);
       const nextPos = ref.current.position.clone().add(deltaVec);
-      if (nextPos.z >= Z_MIN && nextPos.z <= Z_MAX) {
+
+      const origin = ref.current.position.clone();
+      origin.y += 0.5;
+      collisionRaycaster.current.set(origin, deltaVec.clone().normalize());
+      collisionRaycaster.current.far = COLLISION_DISTANCE;
+      const hits = collisionRaycaster.current.intersectObjects(
+        r3fScene.children,
+        true,
+      );
+      const blocked = hits.some(
+        (h) =>
+          h.object.name !== "mesh2009401224_1" && h.object.name !== "Box001_1",
+      );
+
+      if (!blocked && nextPos.z >= Z_MIN && nextPos.z <= Z_MAX) {
         ref.current.position.copy(nextPos);
       }
     }
@@ -115,10 +131,16 @@ export default function Adventurer() {
     }
     // camera
     if (ref.current) {
-      const posKey = ref.current.position.toArray().map(v => v.toFixed(3)).join(",");
+      const posKey = ref.current.position
+        .toArray()
+        .map((v) => v.toFixed(3))
+        .join(",");
       if (posKey !== lastLoggedPos.current) {
         lastLoggedPos.current = posKey;
-        console.log("Character position:", ref.current.position.toArray().map(v => +v.toFixed(3)));
+        console.log(
+          "Character position:",
+          ref.current.position.toArray().map((v) => +v.toFixed(3)),
+        );
       }
 
       const origin = ref.current.position.clone();
@@ -149,7 +171,7 @@ export default function Adventurer() {
     <primitive
       ref={ref}
       object={scene}
-      position={[0, 0.5, 7.2]}
+      position={[0, 0.5, 7.0]}
       rotation={[0, Math.PI, 0]}
     />
   );
